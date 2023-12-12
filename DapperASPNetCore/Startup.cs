@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 namespace DapperASPNetCore
 {
@@ -72,6 +74,33 @@ namespace DapperASPNetCore
 						
 				});
 			});
+
+			services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+					.AddJwtBearer(options =>
+					{
+						options.RequireHttpsMetadata = false;
+						options.TokenValidationParameters = new TokenValidationParameters
+						{
+							// укзывает, будет ли валидироваться издатель при валидации токена
+							ValidateIssuer = true,
+							// строка, представляющая издателя
+							ValidIssuer = AuthOptions.ISSUER,
+
+							// будет ли валидироваться потребитель токена
+							ValidateAudience = true,
+							// установка потребителя токена
+							ValidAudience = AuthOptions.AUDIENCE,
+							// будет ли валидироваться время существования
+							ValidateLifetime = true,
+
+							// установка ключа безопасности
+							IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey(),
+							// валидация ключа безопасности
+							ValidateIssuerSigningKey = true,
+						};
+					});
+
+			services.AddControllersWithViews();
 		}
 
 		// Метод Configure для настройки конвейера обработки HTTP-запросов
@@ -89,16 +118,23 @@ namespace DapperASPNetCore
 			// Он добавляется в конвейер обработки запросов ASP.NET Core
 			app.UseCors("VueCorsPolicy");
 
+			app.UseDefaultFiles();
+			app.UseStaticFiles();
+
 			// Метод UseRouting включает маршрутизацию HTTP-запросов, что позволяет определить, какие контроллеры и методы обрабатывают конкретные запросы
 			app.UseRouting();
 
 			// Метод UseHttpsRedirection включает перенаправление на HTTPS, что обеспечивает безопасное соединение с приложением
 			app.UseHttpsRedirection();
 
+			app.UseAuthentication();
+			app.UseAuthorization();
+
 			// Метод UseEndpoints настраивает финальные точки для обработки запросов и связывает их с контроллерами и их методами
 			app.UseEndpoints(endpoints =>
 			{
 				endpoints.MapControllers();
+				endpoints.MapDefaultControllerRoute();
 			});
 
 			// Включение Swagger UI
