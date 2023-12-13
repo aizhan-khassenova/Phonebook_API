@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace DapperASPNetCore
 {
@@ -75,32 +76,23 @@ namespace DapperASPNetCore
 				});
 			});
 
-			services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-					.AddJwtBearer(options =>
-					{
-						options.RequireHttpsMetadata = false;
-						options.TokenValidationParameters = new TokenValidationParameters
-						{
-							// укзывает, будет ли валидироваться издатель при валидации токена
-							ValidateIssuer = true,
-							// строка, представляющая издателя
-							ValidIssuer = AuthOptions.ISSUER,
-
-							// будет ли валидироваться потребитель токена
-							ValidateAudience = true,
-							// установка потребителя токена
-							ValidAudience = AuthOptions.AUDIENCE,
-							// будет ли валидироваться время существования
-							ValidateLifetime = true,
-
-							// установка ключа безопасности
-							IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey(),
-							// валидация ключа безопасности
-							ValidateIssuerSigningKey = true,
-						};
-					});
-
-			services.AddControllersWithViews();
+			services.AddAuthentication(options =>
+			{
+				options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+				options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+			}).AddJwtBearer(options =>
+			{
+				options.TokenValidationParameters = new TokenValidationParameters
+				{
+					ValidateIssuer = true,
+					ValidateAudience = true,
+					ValidateLifetime = true,
+					ValidateIssuerSigningKey = true,
+					ValidIssuer = "your_issuer", // замените на свой
+					ValidAudience = "your_audience", // замените на свой
+					IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("your_secret_key")) // замените на свой
+				};
+			});
 		}
 
 		// Метод Configure для настройки конвейера обработки HTTP-запросов
@@ -118,9 +110,6 @@ namespace DapperASPNetCore
 			// Он добавляется в конвейер обработки запросов ASP.NET Core
 			app.UseCors("VueCorsPolicy");
 
-			app.UseDefaultFiles();
-			app.UseStaticFiles();
-
 			// Метод UseRouting включает маршрутизацию HTTP-запросов, что позволяет определить, какие контроллеры и методы обрабатывают конкретные запросы
 			app.UseRouting();
 
@@ -134,7 +123,6 @@ namespace DapperASPNetCore
 			app.UseEndpoints(endpoints =>
 			{
 				endpoints.MapControllers();
-				endpoints.MapDefaultControllerRoute();
 			});
 
 			// Включение Swagger UI

@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace DapperASPNetCore.Entities
+namespace DapperASPNetCore.IdentityAuth
 {
-    public class Person
+    public class LoginData
     {
-        public string Login { get; set; }
+        public string Username { get; set; }
         public string Password { get; set; }
-        public string Role { get; set; }
     }
 }
